@@ -1,6 +1,5 @@
 (() => {
   const WHATSAPP = "447300512108";
-  const LEAD_EMAIL = "info@hhnexusmarketing.com";
 
   const launch = document.querySelector("#chat-launch");
   const widget = document.querySelector("#chatbot");
@@ -195,26 +194,19 @@
       email: state.contact,
       city: state.city,
       service: state.service,
-      message: buildLeadMessage(),
-      _replyto: state.contact,
-      _subject: `world Service Hub lead — ${state.service}`,
-      _template: "table",
-      _autoresponse:
-        "Thanks for contacting world Service Hub. We received your details and will reply shortly. This confirmation was sent automatically so you can see how email lead automation works.",
+      detail: state.detail,
+      page: window.location.href,
     };
 
     try {
-      const res = await fetch(`https://formsubmit.co/ajax/${LEAD_EMAIL}`, {
+      const res = await fetch("lead.php", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data.message || "Could not send email lead");
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Could not send email lead");
       }
       addBubble(
         "Done. Your lead was forwarded to our team, and a confirmation email was sent to you."
