@@ -1,5 +1,6 @@
 (() => {
   const WHATSAPP = "447300512108";
+  const LEAD_EMAIL = "info@hhnexusmarketing.com";
 
   const launch = document.querySelector("#chat-launch");
   const widget = document.querySelector("#chatbot");
@@ -77,14 +78,12 @@
   function addWhatsAppButton() {
     const wrap = document.createElement("div");
     wrap.className = "chat-options";
-
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "chat-option chat-whatsapp";
     btn.textContent = "Send to WhatsApp";
     btn.addEventListener("click", openWhatsApp);
     wrap.appendChild(btn);
-
     body.appendChild(wrap);
     body.scrollTop = body.scrollHeight;
   }
@@ -122,7 +121,7 @@
     state.step = "contactType";
     hideInput();
     addBubble("How should we contact you?");
-    addOptions(["Email", "Phone number"]);
+    addOptions(["Email", "WhatsApp"]);
   }
 
   function askContactValue() {
@@ -131,8 +130,8 @@
       addBubble("Please share your email address.");
       showInput("Enter your email");
     } else {
-      addBubble("Please share your phone number (with country code if possible).");
-      showInput("Enter your phone number");
+      addBubble("Please share your WhatsApp number (with country code if possible).");
+      showInput("Enter your WhatsApp number");
     }
   }
 
@@ -152,9 +151,9 @@
     showInput("Type your requirements");
   }
 
-  function buildWhatsAppMessage() {
+  function buildLeadMessage() {
     return [
-      "New inquiry from world chatbot",
+      "New inquiry from world Service Hub chatbot",
       "",
       `Name: ${state.name}`,
       `City: ${state.city}`,
@@ -163,11 +162,13 @@
       `Service: ${state.service}`,
       "",
       `Requirements: ${state.detail}`,
+      "",
+      `Page: ${window.location.href}`,
     ].join("\n");
   }
 
   function openWhatsApp() {
-    const text = encodeURIComponent(buildWhatsAppMessage());
+    const text = encodeURIComponent(buildLeadMessage());
     const url = `https://wa.me/${WHATSAPP}?text=${text}`;
     window.open(url, "_blank", "noopener,noreferrer");
     addBubble("WhatsApp is open — just tap Send there to finish.");
@@ -182,6 +183,58 @@
       "Thanks! Your details are ready. Tap the button below to open WhatsApp — then just press Send."
     );
     addWhatsAppButton();
+  }
+
+  async function submitEmailLead() {
+    state.step = "email-submit";
+    hideInput();
+    addBubble("Thanks! Sending your details now…");
+
+    const payload = {
+      name: state.name,
+      email: state.contact,
+      city: state.city,
+      service: state.service,
+      message: buildLeadMessage(),
+      _replyto: state.contact,
+      _subject: `world Service Hub lead — ${state.service}`,
+      _template: "table",
+      _autoresponse:
+        "Thanks for contacting world Service Hub. We received your details and will reply shortly. This confirmation was sent automatically so you can see how email lead automation works.",
+    };
+
+    try {
+      const res = await fetch(`https://formsubmit.co/ajax/${LEAD_EMAIL}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || "Could not send email lead");
+      }
+      addBubble(
+        "Done. Your lead was forwarded to our team, and a confirmation email was sent to you."
+      );
+      state.step = "done";
+    } catch (err) {
+      addBubble(
+        "We couldn’t send the email automatically right now. Please WhatsApp +44 7300 512108 or email info@hhnexusmarketing.com."
+      );
+      addWhatsAppButton();
+      state.step = "done";
+    }
+  }
+
+  function finishFlow() {
+    if (state.contactType === "Email") {
+      submitEmailLead();
+      return;
+    }
+    finishWithWhatsAppOption();
   }
 
   function onOption(label) {
@@ -228,7 +281,7 @@
 
     if (state.step === "detail") {
       state.detail = value;
-      finishWithWhatsAppOption();
+      finishFlow();
     }
   });
 
