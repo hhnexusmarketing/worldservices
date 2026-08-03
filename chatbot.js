@@ -107,7 +107,7 @@
   function startFlow() {
     state.step = "name";
     hideInput();
-    addBubble("Hello! I’m the world chatbot.");
+    addBubble("Hello! I’m the world Service Hub chatbot.");
     addBubble("May I have your full name, please?");
     showInput("Enter your full name");
   }
