@@ -67,7 +67,7 @@ window.setTimeout(() => {
 
 function buildInquiryMessage(data) {
   const lines = [
-    "New inquiry from mjy world website",
+    "New inquiry from world website",
     "",
     `Name: ${data.name}`,
     `Contact: ${data.contact}`,

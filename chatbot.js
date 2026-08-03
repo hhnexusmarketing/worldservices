@@ -107,7 +107,7 @@
   function startFlow() {
     state.step = "name";
     hideInput();
-    addBubble("Hello! I’m the mjy world chatbot.");
+    addBubble("Hello! I’m the world chatbot.");
     addBubble("May I have your full name, please?");
     showInput("Enter your full name");
   }
@@ -154,7 +154,7 @@
 
   function buildWhatsAppMessage() {
     return [
-      "New inquiry from mjy world chatbot",
+      "New inquiry from world chatbot",
       "",
       `Name: ${state.name}`,
       `City: ${state.city}`,
