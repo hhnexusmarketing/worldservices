@@ -1,5 +1,6 @@
 (() => {
   const WHATSAPP = "447300512108";
+  const TEAM_EMAIL = "info@hhnexusmarketing.com";
 
   const launch = document.querySelector("#chat-launch");
   const widget = document.querySelector("#chatbot");
@@ -74,14 +75,14 @@
     body.scrollTop = body.scrollHeight;
   }
 
-  function addWhatsAppButton() {
+  function addActionButton(label, className, onClick) {
     const wrap = document.createElement("div");
     wrap.className = "chat-options";
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "chat-option chat-whatsapp";
-    btn.textContent = "Send to WhatsApp";
-    btn.addEventListener("click", openWhatsApp);
+    btn.className = `chat-option ${className}`;
+    btn.textContent = label;
+    btn.addEventListener("click", onClick);
     wrap.appendChild(btn);
     body.appendChild(wrap);
     body.scrollTop = body.scrollHeight;
@@ -168,9 +169,17 @@
 
   function openWhatsApp() {
     const text = encodeURIComponent(buildLeadMessage());
-    const url = `https://wa.me/${WHATSAPP}?text=${text}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+    window.open(`https://wa.me/${WHATSAPP}?text=${text}`, "_blank", "noopener,noreferrer");
     addBubble("WhatsApp is open — just tap Send there to finish.");
+    state.step = "done";
+    clearOptions();
+  }
+
+  function openEmailCompose() {
+    const subject = encodeURIComponent(`world Service Hub lead — ${state.service}`);
+    const bodyText = encodeURIComponent(buildLeadMessage());
+    window.location.href = `mailto:${TEAM_EMAIL}?subject=${subject}&body=${bodyText}`;
+    addBubble("Your email app is open with the lead ready — just tap Send.");
     state.step = "done";
     clearOptions();
   }
@@ -181,13 +190,13 @@
     addBubble(
       "Thanks! Your details are ready. Tap the button below to open WhatsApp — then just press Send."
     );
-    addWhatsAppButton();
+    addActionButton("Send to WhatsApp", "chat-whatsapp", openWhatsApp);
   }
 
   async function submitEmailLead() {
     state.step = "email-submit";
     hideInput();
-    addBubble("Thanks! Sending your details now…");
+    addBubble("Thanks! Forwarding your details to our team…");
 
     const payload = {
       name: state.name,
@@ -196,29 +205,54 @@
       service: state.service,
       detail: state.detail,
       page: window.location.href,
+      _subject: `world Service Hub lead — ${state.service}`,
+      _template: "table",
+      _replyto: state.contact,
+      _cc: state.contact,
+      _autoresponse:
+        "Thanks for contacting world Service Hub. We received your details and will reply shortly.",
     };
 
+    let sent = false;
+
     try {
-      const res = await fetch("lead.php", {
+      const res = await fetch("/lead.php", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Could not send email lead");
-      }
-      addBubble(
-        "Done. Your lead was forwarded to our team, and a confirmation email was sent to you."
-      );
-      state.step = "done";
+      sent = res.ok && data.ok === true;
     } catch (err) {
-      addBubble(
-        "We couldn’t send the email automatically right now. Please WhatsApp +44 7300 512108 or email info@hhnexusmarketing.com."
-      );
-      addWhatsAppButton();
-      state.step = "done";
+      sent = false;
     }
+
+    if (!sent) {
+      try {
+        const res = await fetch(`https://formsubmit.co/ajax/${TEAM_EMAIL}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(payload),
+        });
+        sent = res.ok;
+      } catch (err) {
+        sent = false;
+      }
+    }
+
+    if (sent) {
+      addBubble(
+        "Done. Your lead was sent to info@hhnexusmarketing.com, and a copy goes to your email too."
+      );
+      state.step = "done";
+      return;
+    }
+
+    addBubble(
+      "Auto-send needs a quick setup. Tap below to open email with your lead ready — then press Send."
+    );
+    addActionButton("Send Email", "chat-whatsapp", openEmailCompose);
+    state.step = "done";
   }
 
   function finishFlow() {
