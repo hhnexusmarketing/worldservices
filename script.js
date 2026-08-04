@@ -95,3 +95,30 @@ form?.addEventListener("submit", (event) => {
   const whatsappUrl = `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(body)}`;
   window.open(whatsappUrl, "_blank", "noopener,noreferrer");
 });
+
+document.addEventListener("click", (event) => {
+  const link = event.target.closest(
+    'a[href*="cashpilot.hhnexusmarketing.com"], a.js-open-tab'
+  );
+  if (!link) return;
+
+  const href = link.getAttribute("href");
+  if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const opened = window.open(href, "_blank", "noopener,noreferrer");
+  if (!opened) {
+    const fallback = document.createElement("a");
+    fallback.href = href;
+    fallback.target = "_blank";
+    fallback.rel = "noopener noreferrer";
+    fallback.style.display = "none";
+    document.body.appendChild(fallback);
+    fallback.click();
+    fallback.remove();
+  }
+});
